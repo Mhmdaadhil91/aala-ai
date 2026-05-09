@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "Book": {
+      "title": "Book Definition",
+      "description": "Represents a generated book project",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "coverUrl": { "type": "string" },
+        "coverPrompt": { "type": "string" },
+        "type": { "type": "string", "enum": ["Motivation", "Success", "Money", "Children Stories", "Islamic Lifestyle", "Coloring"] },
+        "theme": { "type": "string" },
+        "audience": { "type": "string" },
+        "pageCount": { "type": "number" },
+        "status": { "type": "string", "enum": ["draft", "generating", "completed", "failed"] },
+        "manuscript": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "pageNumber": { "type": "number" },
+              "title": { "type": "string" },
+              "content": { "type": "string" },
+              "imagePrompt": { "type": "string" },
+              "imageUrl": { "type": "string" }
+            }
+          } 
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "type", "status"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "Extended user data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "plan": { "type": "string", "enum": ["free"] },
+        "generationsUsed": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "/books/{bookId}": {
+      "schema": "Book",
+      "description": "Collection of user-generated books"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User metadata and subscription status"
+    }
+  }
+}

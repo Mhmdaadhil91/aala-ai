@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Book Validation
+    function isValidBook(data) {
+      return data.userId == request.auth.uid 
+        && data.title is string && data.title.size() <= 200
+        && data.type in ["Motivation", "Success", "Money", "Children Stories", "Islamic Lifestyle", "Coloring"]
+        && data.pageCount is int && data.pageCount >= 1 && data.pageCount <= 100
+        && data.status in ['draft', 'generating', 'completed', 'failed']
+        && data.keys().hasAll(['userId', 'title', 'type', 'status']);
+    }
+
+    // User Validation
+    function isValidUser(data) {
+      return data.uid == request.auth.uid
+        && data.email is string && data.email.size() <= 255;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) 
+        && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'generationsUsed', 'plan'])
+        && isValidUser(incoming());
+    }
+
+    match /books/{bookId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn() 
+        && isValidId(bookId)
+        && isValidBook(incoming())
+        && incoming().userId == request.auth.uid;
+        
+      allow update: if isOwner(existing().userId)
+        && isValidBook(incoming())
+        && incoming().userId == existing().userId
+        && (
+          // Action: Update status, manuscript or covers
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'manuscript', 'updatedAt', 'coverUrl', 'coverPrompt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['title', 'theme', 'audience'])
+        );
+        
+      allow delete: if isOwner(existing().userId);
+    }
+  }
+}

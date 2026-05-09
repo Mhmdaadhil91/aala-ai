@@ -1,0 +1,6 @@
+{
+  "name": "Aala AI",
+  "description": "AI-powered automatic book generation system for Amazon KDP.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["AI Book Generation", "KDP PDF Export", "Image Prompt Engine"]
+}
